@@ -1,0 +1,75 @@
+#!/usr/bin/sh
+
+
+if [[ ! -z "${MONS_NUMBER}" ]]; then
+  profile=$MONS_NUMBER
+else
+  profile=$1
+fi
+
+
+# extend non-HiDPI external display on DP* above HiDPI internal display eDP*
+# see also https://wiki.archlinux.org/index.php/HiDPI
+# you may run into https://bugs.freedesktop.org/show_bug.cgi?id=39949
+#                  https://bugs.launchpad.net/ubuntu/+source/xorg-server/+bug/883319
+
+# EXT=`xrandr --current | sed 's/^\(.*\) connected.*$/\1/p;d' | grep -v ^eDP | head -n 1`
+# INT=`xrandr --current | sed 's/^\(.*\) connected.*$/\1/p;d' | grep -v ^DP | head -n 1`
+#
+# ext_w=`xrandr | sed 's/^'"${EXT}"' [^0-9]* \([0-9]\+\)x.*$/\1/p;d'`
+# ext_h=`xrandr | sed 's/^'"${EXT}"' [^0-9]* [0-9]\+x\([0-9]\+\).*$/\1/p;d'`
+# int_w=`xrandr | sed 's/^'"${INT}"' [^0-9]* \([0-9]\+\)x.*$/\1/p;d'`
+# off_w=`echo $(( ($int_w-$ext_w)/2 )) | sed 's/^-//'`
+# #
+# xrandr --fb 9680x2808 --output "${INT}" --auto --pos ${off_w}x${ext_h} --scale 1x1  --output "${EXT}" --left-of "${INT}" --auto --scale 1.3x1.3 --pos 0x0
+#
+
+# EXT_MON_CONNECTOR=$(x_monitor_switch -l | grep '#' | grep -v eDP | awk '{ print $2 }')
+# notify-send "external monitor found at connector: $EXT_MON_CONNECTOR"
+
+
+# SCALE=1.3
+# RESX=3840
+# RESY=2160
+# # xrandr makes scaled external monitor overlap laptop monitor
+# SCALED_POSX=$(echo "$RESX*$SCALE" | bc | awk '{ printf("%.0f\n",$1) '})
+# # combines externalmonitor*SCALE + 3840
+# SCALED_X=$(echo "$RESX*$SCALE+3840" | bc | awk '{ printf("%.0f\n",$1) '})
+# SCALED_Y=$(echo "$RESY*$SCALE" | bc | awk '{ printf("%.0f\n",$1) '})
+# echo "$SCALED_X $SCALED_Y $SCALED_POSX"
+# exit
+
+case $profile in
+  "1_monitor" | 1)
+    notify-send "single monitor applied"
+  ;;
+  "2_monitor" | 2)
+    notify-send "2 monitors applied"
+    xrandr --output DP-1-3 --scale 1.3x1.3 --primary --output eDP-1-1 --pos 4992x408 --scale 1x1
+    # xrandr --output eDP-1-1 --pos 4992x408
+    # xlayoutdisplay -p DP-1-3 -o DP-1-3 -o eDP-1-1 --dpi 192
+    # xrandr --output DP-0 --off --output DP-1 --off --output DP-2 --off --output DP-3 --off --output DP-4 --off --output DP-5 --off --output DP-6 --off --output DP-7 --off --output eDP-1-1 --mode 3840x2400 --pos 4992x408 --rotate normal --output DP-1-1 --off --output DP-1-2 --off --output DP-1-3 --primary --mode 3840x2160 --pos 0x0 --rotate normal --output DP-1-4 --off
+
+    # old
+    # xrandr --fb 10000x"$SCALED_Y" --output DP-1-3 --pos 0x240 --rotate normal --scale "$SCALE"x"$SCALE" --left-of eDP-1-1 --primary --output eDP-1-1 --scale 1x1 --pos 5600x0 --rotate normal
+    # xrandr --output DP-3 --scale '1.17x1.17' --output eDP-1 --scale '1.17x1.17'
+    # xrandr --output DP-3 --scale 1x1
+    # xrandr --output DP-3 --scale '1x1' --output eDP-1 --scale '1x1'
+  ;;
+  *)
+    notify-send "asterisk applied"
+  ;;
+esac
+
+
+
+# DP-3 = 3840x2160 = 4608
+
+# STEP TO GENERATE A NEW CONFIG
+# programatically scaling with xrandr command to begin with doesnt work:
+
+# 1 decide scaling factor
+# xrandr --output eDP-1 --scale 1x1 --output Dp-3 --scale 1.3x1.3
+# open arandr and adjust positioning, export command and paste it into case statement
+
+
